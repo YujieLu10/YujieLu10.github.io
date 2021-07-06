@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title></title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#574CDD">
+<meta name="description" content="">
+<meta property="og:description" content="">
+<meta name="twitter:description" content="">
+<meta property="og:image" content="">
+<meta name="twitter:image" content="">
+<link rel="icon" href="https://yujielu10.github.io/img/favicon.png" type="image/x-icon">
+<link rel="shortcut icon" href="https://yujielu10.github.io/img/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="https://yujielu10.github.io/css/final.css">
+<link rel="stylesheet" href="https://yujielu10.github.io/css/normalize.css">
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,700" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Merriweather" rel="stylesheet">
+
+    </head>
+    <body>
+        <nav class="main-navigation stuckMenu">
+    <a href="https://yujielu10.github.io/">
+        <img class="logo" src="https://yujielu10.github.io/img/logo.png" alt="Yujie Lu">
+    </a>
+    <h5></h5>
+    <div class="sub-navigation">
+        <a href="https://yujielu10.github.io/#projects" class="main-navigation-link">Selected Projects</a>
+    </div>
+</nav>
+
+        <section>
+            <div class="content-case-study" data-scroll-index="0">
+                <h2 id="background">Background</h2>
+<p>In the Browser mode of cocos creator, you can see the value of Drawcall. In our project, the number of drawcalls has exceeded the ideal value, and the demand for drawcall optimization is proposed.</p>
+<p>Firstly, by observing the change of the drawcall value through the deactive node method, you can locate the source of a large number of drawcalls (single node or multiple nodes) in the scene. Further analysis produces a large number of drawcall factors.</p>
+<h2 id="project-background">Project Background</h2>
+<p>Some Label components are often used in the UI interface for descriptive explanations, and these Label components will interrupt the automatic batch processing function of the engine itself, resulting in a very high DrawCall on the UI interface. Since BMFont and art numbers also use pictures for rendering, I hope to add BMFont (bitmap font) and art numbers and other UI pictures for combined rendering in existing projects to achieve the goal of reducing drawcalls. To</p>
+<p>Locating the source of a large number of drawcalls on the learning path interface through the deactive method is the two nodes avatarLayout and StageContro, and further locate the factors that cause excessive drawcalls for each node, and try to optimize them. For the avatarLayout that can be up to 9 drawcalls, it is reduced to 2 drawcalls.</p>
+<p>The data learned that the format required by cocoscreator is plist, and choose to use texture-packer to add some sprites on the learning path, merge them into a homeData atlas, and publish to export as homeData.png and homeData.plist. In the editor, replace the sprites under each node with the small images indexed by homeData.plist to reduce the switching of atlases and realize drawcall merging.</p>
+<p>In the test, it was found that the drawcall did not decrease, and it was positioned on the mask of some nodes. In order to ensure that the avatar was in the circular frame, the component mask was added. Mask, as a Renderer Component, will independently call drawcalls to block the merging of drawcalls. It needs to be raised to a separate node and the drawing order is adjusted so that other nodes from HomeData.plist are successfully merged into the same drawcall.</p>
+<p>When there are a large number of masks in the same scene, you can put all the masks under the same node, and add a widget component to set the target as the original parent node.</p>
+<p>Integrating the characteristics of the project, after practical verification, including the introduction of bmfont into the initial optimization requirements, four types of optimization methods are summarized: 1. Node structure UI level optimization 2. bmfont introduction 3. Dynamic resource part 4. Animation part</p>
+<h2 id="optimization-scheme">Optimization Scheme</h2>
+<h3 id="node-structure-ui-level-optimization">Node structure UI level optimization</h3>
+<ul>
+<li>Implemention Details
+During the rendering process, modifying the shader or switching the texture source will change the setting parameters of the rendering pipeline, and then block the drawcall, requiring a new drawcall to complete the transmission of new drawing data.</li>
+</ul>
+<p>In order to reduce the drawcall, it is natural to start by reducing the number of switching texture resources. In order to reduce the number of switching, that is, to make the objects drawn in the scene come from as few atlas resources as possible, the solution is to merge atlas. In practice, use TexturePacker to merge small images. Add Sprites to add small images of resources to be merged, and export .plist and .png resources to the project. The corresponding sprite resource needs to be replaced with the corresponding picture under atlas.</p>
+<p>At the same time, adjust the UI level so that the nodes whose rendering resources originate from the same combined image are located in adjacent positions in the zorder order (the rendering order is related to the zorder order. If the resources of the adjacent rendering nodes in the zorder order are the same, there is no need to switch texture resources to The purpose of merging drawcall).</p>
+<p>The adjusted drawcall, when the label node is extracted and the renderer component of mask is not used, and the dynamically loaded avatar resource is not considered, it can reach 1 drawcall, which is the theoretical value. In reality, 4 drawcalls are required, which is half of the original 9 drawcalls.</p>
+<h3 id="bmfont">bmfont</h3>
+<ul>
+<li>Implemention Details
+The label that exists in the UI interface, as a kind of renderer component, will also occupy a drawcall separately during the rendering process, so that the original continuous drawcall is blocked. When a large number of label components are interspersed in the project (such as learning in the project) The path, level and character level all use the label component), the value of drawcall will become higher.</li>
+</ul>
+<p>After research, I decided to introduce BMFont bitmap fonts into the project. BMFont uses images for rendering like ordinary resources. In this way, you may try to merge textures in the same way as bmfont texture resources to merge drawcalls.</p>
+<p>In the course of practice, Glyph Designer (which can adjust basic parameters such as color, size, etc., and Load Font can also import custom fonts required by the project) is used to make bitmap fonts, and export .fnt and .png files to the project. Different types of bmfont can be made as follows:</p>
+<p>These bitmap fonts are placed in the same folder, and AutoAtlas is added under the Assets folder, and all labels in the current scene are extracted in the original zorder order, mounted under a new empty node, and replaced with Label The Font is the corresponding newly introduced bmfont. In this way, all labels under this node are rendered in the form of bitmaps, and the font drawcall merge is realized.</p>
+<ul>
+<li>Results
+Before optimization, the font of the node is a normal font (two drawcalls are the initial drawcalls used to draw other objects), and it can be seen that (7-2) 5 drawcalls correspond to a single label component. After using bmfont, (3-2) 1 drawcall, all the drawing instructions of label components are combined into one drawcall.</li>
+</ul>
+<h3 id="dynamic-resource">Dynamic resource</h3>
+<ul>
+<li>Implemention Details
+In the project, the use of the above two schemes still cannot significantly reduce the drawcall value. Further in-depth research found that the stage, learnMoreBg, nextLevelBg hanging under the stageControl node in the mainEx scene are the basis for achieving better results in the drawcall optimization of avatarLayout. Next, using the same method to optimize these three sprites, there is almost no optimization effect. For the home page of the learning path, the prefab of the stage is further processed separately. Try to reduce unnecessary empty parent nodes, drawcall did not reduce.</li>
+</ul>
+<p>In fact, in the stage prefab, the main reason for blocking drawcall is that there are dynamically loaded sprites under many nodes. Try to get the sprite of the corresponding node in stage.js, and use a picture in a specific atlas as the source of this sprite. The image of this part of the project was pulled from the Internet, and the original method could not be used to generate a large atlas in advance.</p>
+<p>Try to optimize the drawcall of this part of dynamic loading, try to reduce empty parent nodes, and separate nodes with dynamic sprites to prevent blocking, no optimization effect. The root cause of this part of the drawcall is not that individual rendering elements are used as independent drawcalls to block the overall continuous drawcall, but that the rendering elements under the node are almost all independent drawcalls, or the interface abcloader.loader is passed through the local path or https. .loadImage, to instantiate the spriteframe for the returned image resource. The preliminary plan is to not instantiate the sprite frame immediately after the image is pulled from the Internet, but after pulling all the images from the Internet in the scene, try to use the script Realize the automatic atlas function in, and then instantiate and render scenes one by one.</p>
+<ul>
+<li>Results
+This preliminary plan will have a certain impact on project performance. At the same time, after a single resource is changed, it is necessary to re-synthesize large image resources online, which seriously affects performance. After weighing, it was decided not to adopt this plan to reduce the large number of drawcalls generated by dynamically loading sprites.</li>
+</ul>
+<h3 id="animation">animation</h3>
+<ul>
+<li>Implemention Details
+It is divided into character task animation and object animation under undersea. For object animation, there are multiple AncientOcean_xxx folders under the undersea file, and each folder corresponds to a partial animation resource, such as fish, seaweed, shells, and folders. There are atlas files with the same name, json file and png. The json file describes the time-related attributes of the skeleton, such as length, corner, coordinate value, uv coordinate, vertex information, etc. The animation of the corresponding picture described by each json file will be played in a loop.</li>
+</ul>
+<p>Each individual local animation resource needs drawcall, so I hope to combine multiple skeletons into one skeleton. Seaweed, corral, bubble, and shell were selected as the skeletons to be merged. First merge the resources of this part, and then merge their json files to describe a skeleton. There are problems when merging. Because these bones have different time periods, and the range of activities are different, and the reference points are different, json The format change may be too large. In fact, this should be a json format exported by software. It is not reasonable to manually modify too many values. No reasonable solution has been found for merging animation</p>
+<p>The implementation method is mainly to replace the original abcloader.loader.loadImage(abcloader.loader.loadImage(url, (err, img) =&gt; )) method, using the method of pre-loading resources, and each sprite frame afterwards passes atlas.getSpriteFrame Load the small pictures under the atlas dynamically.</p>
+<ul>
+<li>Results
+The current method of dynamically loading atlas implemented by the stage prefab fails to lower the drawcall. If you analyze from the perspective of &ldquo;switching atlases will generate new drawcalls&rdquo;, the current method should be able to merge drawcalls. The reason for the failure may be that after the prefab is instantiated, the image corresponding to the dynamically loaded atlas will return a The basic resource texture2d, in this way, is still a different resource source when rendering.</li>
+</ul>
+<p>In the optimization of the animation part, due to the different time cycle sequences of different bones, you cannot simply merge json and then merge the bones. If you want to reduce the drawcall of this part, you should consider the need to reduce the drawcall value from the initial production of the bone animation.</p>
+<h2 id="case-study">Case Study</h2>
+<h3 id="drawcall-peak">Drawcall Peak</h3>
+<p>Compare the drawcalls of each scene of the project, check the nodes and associated scripts in each scene, and simply classify the situations that caused a large number of drawcalls in 4 kinds of projects, as follows:</p>
+<ol>
+<li>160+drawcall purchase interface, shopping scene
+The characters on the left side of the scene, skin, eyes, nose, clothes, etc. are all dynamically loaded or use the default sprite, up to 20dc</li>
+</ol>
+<p>In the checkout purchase settlement interface, there are fewer dynamically loaded parts, but there are more labels under the buttons. This part still uses the previous method bmfont, which can save 10dc</p>
+<p>In the background part, most of them are loading local resources. The previous method of tuning nodes can save nearly 10 drawcalls.</p>
+<ol start="2">
+<li>
+<p>Debug scene, belongs to a type of UI interface that is truncated by label dc, up to 60 drawcall, optimized by bmfont</p>
+</li>
+<li>
+<p>Purchase scenario</p>
+</li>
+</ol>
+<p>Dynamically load resources</p>
+<p>Use of label components</p>
+<p>Many default resources such as default_sprite_splash and default_panel are used, and the pictures cannot be combined. Consider first trying to perform dc merge on nodes that need to use the default resource. If it is not feasible, consider replacing the default resource and use a local resource with the same performance effect.</p>
+<ol start="4">
+<li>And the animation of the learning path scene</li>
+</ol>
+<h3 id="plan-analysis">Plan Analysis</h3>
+<p>Comparing the optimization schemes of these scenarios, the difficulty is still in 1. Dynamic resource part 2. Animation part</p>
+<ol>
+<li>For the dynamic resource part, try two solutions</li>
+</ol>
+<p>Pull pictures and then dynamically generate atlas (affecting performance)</p>
+<p>The background directly gives the atlas resources (combined picture Png and combined picture plist). The price is that a single network picture changes, and the big picture must be re-synthesized</p>
+<ol start="2">
+<li>For the animation part, after learning animation clip, I found that it is actually the property change on the timeline. I am going to make an atlas of the same sequence of pictures. In theory, the next frame of rendering and the previous frame of rendering are from the same atlas. It is also possible to merge drawcall.</li>
+</ol>
+<p>There are three large images (164kb) loaded in objectsControl, frontInfo, mediumInfo, and backInfo. This type of large image should be drawn separately and not combined.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>The first phase of the Drawcall optimization scheme is mainly for the learning path. Among the four types of optimization schemes analyzed, the adjustment of the node structure and the introduction of bmfont have met the expected requirements for reducing the drawcall value. However, due to the nature of the scene (for example, more animations and more resources are dynamically loaded), the drawcall value of the entire scene did not drop significantly. As for the drawcall optimization of dynamic loading, after weighing the performance cost, it has not been adopted for the time being. This plan needs to be improved in the second phase. At the same time, the drawcall optimization of animation also requires a new solution.</p>
+<p>In general, the research process first tried the commonly used cocos creator drawcall optimization solution, combined with the characteristics of the scene that the project needs to render, summed up four types of situations that affect the drawcall value, and designed corresponding solutions. The UI level optimization of the node structure can reduce the 9 drawcalls occupied by the avatarLayout of the learning path to 3 drawcalls, achieving a better local optimization effect. At the same time, the BMFont bitmap font was successfully used in the project, replacing the font used by the original Label component in the project, and realizing the merging of the Label component drawcall. In a scene with more Label components, the originally blocked drawcall was successfully merged.</p>
+<p>After the implementation of these two optimization schemes, the overall drawcall value is still high. The reason is that the dynamic resource part and the animation part occupy more than 3/4 of the drawcall of the learning path. The animation part needs to negotiate with the colleagues who made the animation. The plan, for the optimization plan of the dynamic resource part, due to the consideration of the realization cost and performance balance, it will not be adopted in the learning path for the time being. This plan will be improved for the shopping scene in the second phase optimization plan, and a project will be proposed for general use Optimization program.</p>
+
+            </div>
+        </section>
+
+        
+
+        
+        <footer>
+    <div class="icons">
+        
+        <a href="mailto:yujielu10@gmail.com">
+            <svg width="16px" height="14px" viewBox="0 0 16 14" version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+                
+                <title>ui-16px-1_email-84</title>
+                <desc>Created with Sketch.</desc>
+                <defs></defs>
+                <g id="Portfolio" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                    <g transform="translate(-94.000000, -336.000000)" id="Group" fill="#505050">
+                        <g transform="translate(94.000000, 335.000000)">
+                            <g id="ui-16px-1_email-84" transform="translate(0.000000, 1.000000)">
+                                <path d="M15,0 L1,0 C0.448,0 0,0.447 0,1 L0,13 C0,13.553 0.448,14 1,14 L15,14 C15.552,14 16,13.553 16,13 L16,1 C16,0.447 15.552,0 15,0 Z M14,12 L2,12 L2,5.723 L7.504,8.868 C7.812,9.044 8.189,9.044 8.496,8.868 L14,5.723 L14,12 Z M14,3.42 L8,6.849 L2,3.42 L2,2 L14,2 L14,3.42 Z" id="Shape"></path>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </svg>
+        </a>
+        
+        
+        
+        
+        
+        <a href="https://www.linkedin.com/in/yujielu10/" target="blank">
+            <svg width="17px" height="16px" viewBox="0 0 17 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+                
+                <title>social-16px_logo-linkedin</title>
+                <desc>Created with Sketch.</desc>
+                <defs></defs>
+                <g id="Portfolio" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                    <g transform="translate(-243.000000, -335.000000)" id="Group" fill="#505050">
+                        <g transform="translate(94.000000, 335.000000)">
+                            <g id="social-16px_logo-linkedin" transform="translate(149.000000, 0.000000)">
+                                <path d="M15.3,0 L0.7,0 C0.3,0 0,0.3 0,0.7 L0,15.4 C0,15.7 0.3,16 0.7,16 L15.4,16 C15.8,16 16.1,15.7 16.1,15.3 L16.1,0.7 C16,0.3 15.7,0 15.3,0 Z M4.7,13.6 L2.4,13.6 L2.4,6 L4.8,6 L4.8,13.6 L4.7,13.6 Z M3.6,5 C2.8,5 2.2,4.3 2.2,3.6 C2.2,2.8 2.8,2.2 3.6,2.2 C4.4,2.2 5,2.8 5,3.6 C4.9,4.3 4.3,5 3.6,5 Z M13.6,13.6 L11.2,13.6 L11.2,9.9 C11.2,9 11.2,7.9 10,7.9 C8.8,7.9 8.6,8.9 8.6,9.9 L8.6,13.7 L6.2,13.7 L6.2,6 L8.5,6 L8.5,7 L8.5,7 C8.8,6.4 9.6,5.8 10.7,5.8 C13.1,5.8 13.5,7.4 13.5,9.4 L13.5,13.6 L13.6,13.6 Z" id="Shape"></path>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </svg>
+        </a>
+        
+        
+        
+        <a href="https://github.com/YujieLu10" target="blank">
+          <svg width="17px" height="17px" viewBox="0 0 17 17" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <title>social-16px_logo-github</title>
+              <g id="Portfolio" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                  <g id="GitHub-Mark" transform="translate(-136.000000, -55.000000)" fill="#505050">
+                      <path d="M144.319263,55.455 C139.902185,55.455 136.32,59.0366937 136.32,63.4552456 C136.32,66.9897924 138.612029,69.9880428 141.791009,71.0459021 C142.191267,71.1195692 142.337128,70.8725389 142.337128,70.6603777 C142.337128,70.4708077 142.330252,69.967416 142.326323,69.2999922 C140.101086,69.7832483 139.631581,68.2273994 139.631581,68.2273994 C139.267666,67.303123 138.743156,67.057075 138.743156,67.057075 C138.016799,66.5610499 138.798161,66.5708722 138.798161,66.5708722 C139.601132,66.6273503 140.02349,67.3954524 140.02349,67.3954524 C140.737078,68.617835 141.896107,68.2647241 142.351861,68.0599296 C142.424546,67.5432777 142.631305,67.1906579 142.859673,66.9907746 C141.083314,66.7889268 139.215608,66.1023495 139.215608,63.0368165 C139.215608,62.163616 139.527465,61.4490452 140.039206,60.8901576 C139.956698,60.6878187 139.682166,59.8740429 140.117784,58.7729656 C140.117784,58.7729656 140.789137,58.5578577 142.317483,59.5931258 C142.95544,59.4153426 143.640053,59.326942 144.320246,59.3235043 C144.999947,59.326942 145.684069,59.4153426 146.323008,59.5931258 C147.850372,58.5578577 148.520743,58.7729656 148.520743,58.7729656 C148.957343,59.8740429 148.68281,60.6878187 148.600794,60.8901576 C149.113517,61.4490452 149.422919,62.163616 149.422919,63.0368165 C149.422919,66.1102073 147.552266,66.7864712 145.770505,66.9843901 C146.057315,67.2314204 146.313186,67.7195876 146.313186,68.4660808 C146.313186,69.5352357 146.303364,70.3981229 146.303364,70.6603777 C146.303364,70.8745034 146.447751,71.1234981 146.853411,71.045411 C150.029936,69.9850961 152.32,66.9888101 152.32,63.4552456 C152.32,59.0366937 148.737815,55.455 144.319263,55.455" id="Fill-4"></path>
+                  </g>
+              </g>
+          </svg>
+        </a>
+        
+                        
+    </div>
+    <a style="opacity: 0; z-index: -1;" title="World Map"><img src="//www.clustrmaps.com/map_v2.png?d=bISP4BROEJVmmH9RwalCrQGgodxNO4l-wHr6GAlTdpU&cl=ffffff"></a>
+
+    <a href="#" style="color: #574cdd; text-decoration: underline;" data-scroll-goto="0">Back to top</a>
+</footer>
+        
+
+        
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-XXXXXXXX-Y', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+<script src="https://yujielu10.github.io/js/jquery-1.js"></script>
+<script src="https://yujielu10.github.io/js/stickUp.js"></script>
+<script src="https://yujielu10.github.io/js/scrollIt.js" type="text/javascript"></script>
+<script type="text/javascript">
+    jQuery(function($) {
+        $(document).ready( function() {
+            $('.main-navigation').stickUp({
+
+            });
+        });
+    });
+    $(function(){
+        $.scrollIt({
+            topOffset: -70,         
+            easing: 'ease-in-out'
+        });
+    });
+</script>
+    </body>
+</html>

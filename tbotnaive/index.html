@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title></title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#574CDD">
+<meta name="description" content="">
+<meta property="og:description" content="">
+<meta name="twitter:description" content="">
+<meta property="og:image" content="">
+<meta name="twitter:image" content="">
+<link rel="icon" href="https://yujielu10.github.io/img/favicon.png" type="image/x-icon">
+<link rel="shortcut icon" href="https://yujielu10.github.io/img/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="https://yujielu10.github.io/css/final.css">
+<link rel="stylesheet" href="https://yujielu10.github.io/css/normalize.css">
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,700" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Merriweather" rel="stylesheet">
+
+    </head>
+    <body>
+        <nav class="main-navigation stuckMenu">
+    <a href="https://yujielu10.github.io/">
+        <img class="logo" src="https://yujielu10.github.io/img/logo.png" alt="Yujie Lu">
+    </a>
+    <h5></h5>
+    <div class="sub-navigation">
+        <a href="https://yujielu10.github.io/#projects" class="main-navigation-link">Selected Projects</a>
+    </div>
+</nav>
+
+        <section>
+            <div class="content-case-study" data-scroll-index="0">
+                <h2 id="intelligent-dialogue-system-demo-report">Intelligent Dialogue System Demo Report</h2>
+<h3 id="background">Background</h3>
+<h4 id="product-requirements">Product Requirements</h4>
+<p>Online education products face a large number of repetitive problems from students. In order to reduce the pressure of manual customer service, and to provide students with timely responses and solve student problems, it is necessary to introduce intelligent customer service.</p>
+<h5 id="dialogue-systems-for-online-education">Dialogue Systems for Online Education</h5>
+<ul>
+<li>Question-Answering System
+It is basically an interactive mode of &ldquo;one question and one answer&rdquo;, so the construction of a question and answer system generally does not involve dialogue management related technologies. At the level of natural language understanding, the question answering system emphasizes question analysis, aiming to obtain the subject words, question words, and central verbs of the question sentence. At present, question analysis mainly uses template matching and semantic analysis.</li>
+<li>Task-oriented
+Its purpose is to address the clear needs of users. The task-oriented dialogue system tracks the current dialogue state through dialogue management, and then clarifies the user&rsquo;s purpose and needs. Therefore, dialogue management is a technical focus of the task-oriented dialogue system. The natural language understanding technology in the task-oriented dialogue system focuses on mapping the natural language input by the user into the user&rsquo;s intention and the corresponding slot value.</li>
+<li>Chit-chat
+For multiple rounds of human-machine dialogue without specific purpose and no specific needs of users, the construction process needs to pay attention to the construction of two modules, dialogue management and natural language understanding.</li>
+</ul>
+<h3 id="dialogue-platform-architecture">Dialogue Platform Architecture</h3>
+<p><img src="//yujielu10.github.io/project/chatbot/platform.png" alt="">
+Main Components：</p>
+<ul>
+<li>Online Process NLU Backend
+<ul>
+<li>FAQ: According to the user&rsquo;s Query question, select the corpus with the highest similarity to the Query from the pre-configured corpus, and return the corpus answer.</li>
+<li>Intent Classification: Recognize the user&rsquo;s Query and classify the intent into one of the pre-trained categories. Get the user&rsquo;s Query intention, and return the corresponding answer according to the intention category.</li>
+</ul>
+</li>
+<li>Online process Dialogue Logic
+Handling of manual processes and supplementation of answering questions.</li>
+<li>Backend Management
+Addition, deletion and modification of corpus, intention addition, deletion and modification, dictionary addition, deletion and modification, and analysis and view of online user dialogue data.</li>
+<li>Offline Training
+Offline training of FAQ question matching and intent algorithm.</li>
+</ul>
+<h3 id="dialogue-platform---nlu-process">Dialogue Platform - NLU Process</h3>
+<h5 id="faq-corpus-off-line-process">FAQ Corpus Off-line Process</h5>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> storage <span style="color:#f92672">import</span> mysql_base_dict
+<span style="color:#f92672">import</span> csv
+<span style="color:#f92672">import</span> xlrd 
+<span style="color:#f92672">import</span> codecs
+<span style="color:#f92672">import</span> uuid
+<span style="color:#f92672">import</span> requests
+<span style="color:#f92672">import</span> time
+<span style="color:#f92672">import</span> datetime
+<span style="color:#f92672">import</span> json
+
+redict <span style="color:#f92672">=</span> {}
+<span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">&#34;/data/home/yujie/go_chat_robot_script/chat_platform_script/replace.txt&#34;</span>, <span style="color:#e6db74">&#34;r&#34;</span>) <span style="color:#66d9ef">as</span> ref:
+    <span style="color:#66d9ef">for</span> line <span style="color:#f92672">in</span> ref:
+        linelist <span style="color:#f92672">=</span> line<span style="color:#f92672">.</span>split(<span style="color:#e6db74">&#34; &#34;</span>)
+        redict[str(linelist[<span style="color:#ae81ff">0</span>])] <span style="color:#f92672">=</span> str(linelist[<span style="color:#ae81ff">1</span>])<span style="color:#f92672">.</span>replace(<span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, <span style="color:#e6db74">&#34;&#34;</span>)
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">csv_to_db_solr</span>(filename):
+    workbook <span style="color:#f92672">=</span> xlrd<span style="color:#f92672">.</span>open_workbook(filename)
+    table <span style="color:#f92672">=</span> workbook<span style="color:#f92672">.</span>sheet_by_index(<span style="color:#ae81ff">0</span>)
+
+    <span style="color:#66d9ef">for</span> row_num <span style="color:#f92672">in</span> range(table<span style="color:#f92672">.</span>nrows):
+        row_value <span style="color:#f92672">=</span> table<span style="color:#f92672">.</span>row_values(row_num)
+        <span style="color:#75715e"># placeholder</span>
+        val <span style="color:#f92672">=</span> row_value[<span style="color:#ae81ff">3</span>]
+        
+        <span style="color:#66d9ef">for</span> reitem <span style="color:#f92672">in</span> redict:
+            val <span style="color:#f92672">=</span> str(val)<span style="color:#f92672">.</span>replace(reitem, redict[reitem]) 
+        val <span style="color:#f92672">=</span> str(val)<span style="color:#f92672">.</span>replace(<span style="color:#e6db74">&#34;QQ**&#34;</span>, <span style="color:#e6db74">&#34;$teacher_qq$&#34;</span>)
+ 
+        <span style="color:#75715e"># db</span>
+        ans <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;[&#34;</span>
+        anslist <span style="color:#f92672">=</span> str(val)<span style="color:#f92672">.</span>split(<span style="color:#e6db74">&#34;$next_ans&#34;</span>)
+        <span style="color:#66d9ef">for</span> item <span style="color:#f92672">in</span> anslist:
+            ans <span style="color:#f92672">+=</span> <span style="color:#e6db74">&#34;{</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">ques_answer</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">+</span> str(item) <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">}&#34;</span>
+        ans <span style="color:#f92672">+=</span> <span style="color:#e6db74">&#34;]&#34;</span>
+        replacements <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>: <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\\\\</span><span style="color:#e6db74">n&#34;</span>, <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\r</span><span style="color:#e6db74">&#34;</span>: <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\\\\</span><span style="color:#e6db74">r&#34;</span>, <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\t</span><span style="color:#e6db74">&#34;</span>: <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\\\\</span><span style="color:#e6db74">t&#34;</span>}
+        category_name <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">.</span>join([replacements<span style="color:#f92672">.</span>get(c, c) <span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> str(row_value[<span style="color:#ae81ff">0</span>])])
+        category_label <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">.</span>join([replacements<span style="color:#f92672">.</span>get(c, c) <span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> str(row_value[<span style="color:#ae81ff">1</span>])])
+        question <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">.</span>join([replacements<span style="color:#f92672">.</span>get(c, c) <span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> str(row_value[<span style="color:#ae81ff">2</span>])])
+        answer <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">.</span>join([replacements<span style="color:#f92672">.</span>get(c, c) <span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> str(ans)])
+        idx <span style="color:#f92672">=</span> uuid<span style="color:#f92672">.</span>uuid1()
+
+        sql <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;INSERT INTO t_chat_question_content (f_qid, f_category_label, f_category_name, f_question, f_answer, f_create_time) VALUES(&#39;</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#39;, &#39;</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#39;, &#39;</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#39;, &#39;</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#39;, &#39;</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#39;, &#39;</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#39; )&#34;</span> <span style="color:#f92672">%</span> (idx, category_label, category_name, question, answer, datetime<span style="color:#f92672">.</span>datetime<span style="color:#f92672">.</span>now())
+        ins<span style="color:#f92672">.</span>query(sql)
+
+        response <span style="color:#f92672">=</span> requests<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#39;http://IP:Port/solr/v1/insert&#39;</span>, params<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#39;id&#39;</span>:idx, <span style="color:#e6db74">&#39;question&#39;</span>:question, <span style="color:#e6db74">&#39;answer&#39;</span>:answer})
+        json_response <span style="color:#f92672">=</span> response<span style="color:#f92672">.</span>json()
+        <span style="color:#66d9ef">print</span>(json_response)
+
+dbConfig<span style="color:#f92672">=</span>{}
+dbConfig[<span style="color:#e6db74">&#34;host&#34;</span>]<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;host&#34;</span>
+dbConfig[<span style="color:#e6db74">&#34;port&#34;</span>]<span style="color:#f92672">=</span><span style="color:#ae81ff">4100</span>
+dbConfig[<span style="color:#e6db74">&#34;user&#34;</span>]<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;username&#34;</span>
+dbConfig[<span style="color:#e6db74">&#34;passwd&#34;</span>]<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;userpassword&#34;</span>
+dbConfig[<span style="color:#e6db74">&#34;db&#34;</span>]<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;chat_platform&#34;</span>
+
+ins<span style="color:#f92672">=</span>mysql_base_dict<span style="color:#f92672">.</span>MysqlBase(dbConfig)
+csv_to_db_solr(<span style="color:#e6db74">&#39;sample.xlsx&#39;</span>)
+</code></pre></div><p>group and save to csv</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">Group:
+mysql -hyourIP -PyourPort -uchatbot -pONLINE352EDU@QQ -Dchat_platform -e <span style="color:#e6db74">&#39;select f_robot_answer,count(*) from t_chat_content where f_device_id=&#34;wxid_uvjb0qxdq0hz12&#34; group by f_robot_answer&#39;</span>  | sed <span style="color:#e6db74">&#39;s/[{}&#34;,:\. ]/\\\0/g;s/\t/&#34;,&#34;/g;s/^/&#34;/;s/$/&#34;/;s/\n//g&#39;</span> &gt; t_xxx_chatcontent.txt
+ToCsv:
+mysql -hyourIP -PyourPort -uchatbot -pONLINE352EDU@QQ -Dchat_platform -e <span style="color:#e6db74">&#39;select * from t_chat_content where f_device_id=&#34;wxid_003acg6kwlny12&#34;&#39;</span>  | sed <span style="color:#e6db74">&#39;s/[{}&#34;,:\. ]/\\\0/g;s/\t/&#34;,&#34;/g;s/^/&#34;/;s/$/&#34;/;s/\n//g&#39;</span> &gt; t_abcmousezj216.csv
+
+</code></pre></div><h5 id="qa-process">QA Process</h5>
+<ul>
+<li>Query word segmentation</li>
+<li>Stop word removal</li>
+<li>Candidate questions recalled by the Solr search engine</li>
+<li>Similarity calculation between candidate question and Query question
+<ul>
+<li>SimNet similarity</li>
+<li>Jaccard similarity</li>
+<li>Cosine similarity</li>
+</ul>
+</li>
+<li>Comprehensive ranking of similarity of candidate questions</li>
+<li>Return candidate questions and answers to candidate questions</li>
+</ul>
+<h4 id="intent-classification-process">Intent Classification Process</h4>
+<p>At present, due to the low accuracy of slot extraction and classification of intent classification, the processing flow of intent classification is placed after the FAQ.</p>
+<h5 id="training">Training</h5>
+<ul>
+<li>Data
+Rasa provides a data annotation platform, named as rasa-nlu-trainer. The marked corpus is stored in a json file. The specific format is as follows, including text, intent, and entities. The start and end of the entity are the start and end indexes of the entity corresponding to the text.</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">   {
+        <span style="color:#f92672">&#34;text&#34;</span>: <span style="color:#e6db74">&#34;可以回听吗？&#34;</span>,
+        <span style="color:#f92672">&#34;intent&#34;</span>: <span style="color:#e6db74">&#34;how_to_class&#34;</span>,
+        <span style="color:#f92672">&#34;entities&#34;</span>: []
+      }<span style="color:#960050;background-color:#1e0010">,</span>
+      {
+        <span style="color:#f92672">&#34;text&#34;</span>: <span style="color:#e6db74">&#34;我想学播音主持类的课程，有推荐的吗&#34;</span>,
+        <span style="color:#f92672">&#34;intent&#34;</span>: <span style="color:#e6db74">&#34;findCourse&#34;</span>,
+        <span style="color:#f92672">&#34;entities&#34;</span>: [
+          {
+            <span style="color:#f92672">&#34;start&#34;</span>: <span style="color:#ae81ff">3</span>,
+            <span style="color:#f92672">&#34;end&#34;</span>: <span style="color:#ae81ff">8</span>,
+            <span style="color:#f92672">&#34;value&#34;</span>: <span style="color:#e6db74">&#34;播音主持类&#34;</span>,
+            <span style="color:#f92672">&#34;entity&#34;</span>: <span style="color:#e6db74">&#34;coursename&#34;</span>
+          }
+        ]
+      }
+    <span style="color:#960050;background-color:#1e0010">}</span>
+</code></pre></div><h5 id="pipeline-setting">Pipeline Setting</h5>
+<p>Rasa Nlu supports different pipelines. Its back-end implementation can support spaCy, MITIE, MITIE + sklearn, and tensorflow. The experiment uses MITIE+Jieba+sklearn.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">language: <span style="color:#e6db74">&#34;zh&#34;</span>
+pipeline:
+<span style="color:#f92672">-</span> name<span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;nlp_mitie&#34;</span>
+  model<span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;data/total_word_feature_extractor_zh.dat&#34;</span>  <span style="color:#75715e">// load mitie model
+</span><span style="color:#75715e"></span><span style="color:#f92672">-</span> name<span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;tokenizer_jieba&#34;</span>                            <span style="color:#75715e">// use jieba for word segmentation
+</span><span style="color:#75715e"></span><span style="color:#f92672">-</span> name<span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;ner_mitie&#34;</span>                                  <span style="color:#75715e">// mitie NER
+</span><span style="color:#75715e"></span><span style="color:#f92672">-</span> name<span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;ner_synonyms&#34;</span>
+<span style="color:#f92672">-</span> name<span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;intent_entity_featurizer_regex&#34;</span>
+<span style="color:#f92672">-</span> name<span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;intent_featurizer_mitie&#34;</span>                    <span style="color:#75715e">// feature extraction
+</span><span style="color:#75715e"></span><span style="color:#f92672">-</span> name<span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;intent_classifier_sklearn&#34;</span>                  <span style="color:#75715e">// sklearn for intent classification
+</span></code></pre></div><h5 id="intent-classificatin-procedure">Intent Classificatin Procedure</h5>
+<p>User Query:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">我想要学Java的课程<span style="color:#960050;background-color:#1e0010">，</span>能不能推荐吗
+</code></pre></div><ul>
+<li>Word Segmentation</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">我 想要 学 Java 的 课程 <span style="color:#960050;background-color:#1e0010">，</span>能 不能 推荐 吗
+</code></pre></div><ul>
+<li>NER</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">Entity Name<span style="color:#f92672">:</span> coursename
+Entity Value<span style="color:#f92672">:</span> Java
+</code></pre></div><ul>
+<li>Word Vector</li>
+<li>java
+Calculate the probability of each type of intents.</li>
+<li>Result</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">Intent: findCourse
+Entity:
+    Entity Name<span style="color:#f92672">:</span> coursename
+    Entity Value<span style="color:#f92672">:</span> Java
+</code></pre></div><h3 id="nlu-backend-techniques">NLU Backend Techniques</h3>
+<h4 id="natural-language-understanding">Natural Language Understanding</h4>
+<h5 id="nlu-module">NLU Module</h5>
+<ul>
+<li>Entity recognition
+Also known as named entity recognition, it refers to the recognition of entities with specific meanings in natural language, such as names, time, place names, and various proper nouns.</li>
+<li>Intent recognition
+The user intentions that need to be recognized include explicit intentions and implicit intentions.</li>
+<li>Emotion recognition
+Whether the user is complimented with the reply of the robot.</li>
+<li>Referential resolution &amp; Eliminate digestion
+In the context of the same theme, people will habitually use pronouns to refer to an entity or event that has already appeared in the conversation, or omit parts of the sentence for convenience. The natural language understanding module needs to clarify the components referred to by the pronouns and the components omitted in the sentence.</li>
+<li>Reply confirmation
+When the user&rsquo;s intention, chat information, etc. are vague, the intelligent conversation customer service needs to actively ask the user to confirm the user&rsquo;s intention.</li>
+<li>Refusal
+The intelligent conversational customer service system should have a certain ability to reject recognition, and actively reject recognition and reply to user input that is beyond the scope of its own understanding/response or involves sensitive topics.</li>
+</ul>
+<h5 id="nlu-basic-technique">NLU Basic Technique</h5>
+<ul>
+<li>Word Segmentation
+Chinese word segmentation mainly uses methods based on vocabulary matching and methods based on statistical models.</li>
+<li>Lexical Analysis
+It is mainly divided into rule-based methods and statistical model-based methods.</li>
+<li>Syntax Analysis
+Analyze the input sentence to get the sentence structure.</li>
+<li>Semantic Analysis
+Understand the semantic content of a piece of text.</li>
+</ul>
+<h5 id="language-representation">Language Representation</h5>
+<ul>
+<li>
+<p>Bag of Words
+The bag-of-words model is based on the assumption that the appearance of each word in the text does not depend on the appearance of other words, ignoring the word order, morphology and syntax of the text, and treats the document as a collection of words.</p>
+</li>
+<li>
+<p>TFIDF
+TFIDF (term frequency-inverse document frequency) is a statistical-based weighting method that uses two values, the number of times a specific word appears in a document and the number of times the word appears in the corpus, to evaluate the importance of the word to the relevant document.</p>
+</li>
+<li>
+<p>DL-based Methods
+bert, etc.</p>
+</li>
+</ul>
+<h4 id="dialogue-platform---faq-process">Dialogue Platform - FAQ Process</h4>
+<p>T-Bot matching algorithm
+User problem analysis</p>
+<ul>
+<li>Word Segmentation</li>
+<li>Retrieve recall
+Open source inverted index solr, added Baidu open source word segmentation</li>
+<li>Calculate matching similarity</li>
+<li>Literal match similarity:
+<ul>
+<li>cosine similarity</li>
+<li>Jaccard similarity</li>
+<li>BM25</li>
+</ul>
+</li>
+<li>Semantic matching similarity</li>
+</ul>
+<p>During the experiment, stop word removal was added after word segmentation to reduce the interference of invalid information in user Query and improve the accuracy of question matching.</p>
+<p>Principle of semantic matching similarity</p>
+<ul>
+<li>Input layer
+This layer converts the text word sequence into word embedding sequence through look up table.</li>
+<li>Presentation layer
+The main function of this layer is to construct from word-to-sentence representation, or to convert the embedding representation of isolated words in a sequence into one or more low-dimensional dense semantic vectors with global information.</li>
+<li>Matching layer
+This layer uses the representation vector of the text for interactive calculation.</li>
+</ul>
+<h4 id="dialogue-platform---intent-recognition">Dialogue Platform - Intent Recognition</h4>
+<p>T-Bot Intent Classification is based on Rasa NLU. As it&rsquo;s a general framework based on pipelines with flexibility with flexibility. The pipeline defines the front and back flow of data between each component. There is a dependency relationship between components. If the dependency requirements of any component are not met, it will cause pipeline errors (Rasa NLU will check whether each component is The dependencies are all satisfied, if not satisfied, the operation is terminated and a related prompt message is given).</p>
+<p>The order relationship between the components is very important. For example, the NER component requires the previous components to provide word segmentation results to work properly, so there must be a tokenizer in the previous components.</p>
+<p>Components can be replaced with each other. For example, they also provide word segmentation results. At the same time, there are several components to choose from. For example, for Chinese, you can choose Tsinghua&rsquo;s tokenizer and Peking University&rsquo;s tokenizer.</p>
+<p>Some components are mutually exclusive, for example, tokenizers are mutually exclusive, and the tokenization result cannot be provided by two components at the same time, otherwise confusion will occur.
+Some components can be used at the same time. For example, the component for extracting text features can use both rule-based and text-based embedding vectors.</p>
+<p>An NLU application usually includes two tasks: named entity recognition and intent recognition. In order to accomplish these tasks, a typical Rasa NLU pipeline usually has the following process:</p>
+<ul>
+<li>Initialization class components: In order to load model files, provide framework support for subsequent components.</li>
+<li>Word segmentation component: Segment text into word sequences to provide basic data for subsequent advanced NLP tasks.</li>
+<li>Extract feature: Extract the text feature of the word sequence. Word Embedding is usually used. The feature extraction components can be used at the same time. At the same time, there may be a regular expression-based feature extraction method.</li>
+<li>NER component: Recognize named entities of text based on the features provided above.</li>
+<li>Intent classification: Intent classification of text according to semantics, also known as intention recognition.</li>
+</ul>
+<h3 id="industry-solutions">Industry Solutions</h3>
+<h4 id="architecture">Architecture</h4>
+<p>In addition to the access module of the service, one is the algorithm technology module, and the other is the back-end data module.
+Algorithm technology Module: all include dialogue management, small chat, task type, question and answer, recommendation prediction function.
+Data Module: both include knowledge graphs and question and answer databases. You can also consider adding data maintenance, online data return and analysis.</p>
+<h4 id="algorithm">Algorithm</h4>
+<p>At present, our dialogue platform is mainly to solve user FAQ questions, so the optimization of the algorithm level first focuses on the improvement of FAQ question and answer matching, which is mainly divided into the following aspects:</p>
+<ul>
+<li>Query preprocessing</li>
+<li>Problem rewrite</li>
+<li>Word Segmentation</li>
+<li>Syntax analysis</li>
+<li>Spelling error correction</li>
+<li>Entity recognition</li>
+<li>Referential resolution</li>
+<li>Eliminate digestion</li>
+<li>Matching algorithm (question reordering)</li>
+</ul>
+<h4 id="ltd-bert">LTD-BERT</h4>
+<p>Use LSTM and other networks to fit the effect of the BERT model, and optimize the calculation efficiency of the algorithm.</p>
+<h4 id="fused-ranking">Fused-Ranking</h4>
+<ul>
+<li>RF</li>
+<li>GBDT</li>
+<li>LTR</li>
+<li>DNN</li>
+</ul>
+
+            </div>
+        </section>
+
+        
+
+        
+        <footer>
+    <div class="icons">
+        
+        <a href="mailto:yujielu10@gmail.com">
+            <svg width="16px" height="14px" viewBox="0 0 16 14" version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+                
+                <title>ui-16px-1_email-84</title>
+                <desc>Created with Sketch.</desc>
+                <defs></defs>
+                <g id="Portfolio" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                    <g transform="translate(-94.000000, -336.000000)" id="Group" fill="#505050">
+                        <g transform="translate(94.000000, 335.000000)">
+                            <g id="ui-16px-1_email-84" transform="translate(0.000000, 1.000000)">
+                                <path d="M15,0 L1,0 C0.448,0 0,0.447 0,1 L0,13 C0,13.553 0.448,14 1,14 L15,14 C15.552,14 16,13.553 16,13 L16,1 C16,0.447 15.552,0 15,0 Z M14,12 L2,12 L2,5.723 L7.504,8.868 C7.812,9.044 8.189,9.044 8.496,8.868 L14,5.723 L14,12 Z M14,3.42 L8,6.849 L2,3.42 L2,2 L14,2 L14,3.42 Z" id="Shape"></path>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </svg>
+        </a>
+        
+        
+        
+        
+        
+        <a href="https://www.linkedin.com/in/yujielu10/" target="blank">
+            <svg width="17px" height="16px" viewBox="0 0 17 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+                
+                <title>social-16px_logo-linkedin</title>
+                <desc>Created with Sketch.</desc>
+                <defs></defs>
+                <g id="Portfolio" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                    <g transform="translate(-243.000000, -335.000000)" id="Group" fill="#505050">
+                        <g transform="translate(94.000000, 335.000000)">
+                            <g id="social-16px_logo-linkedin" transform="translate(149.000000, 0.000000)">
+                                <path d="M15.3,0 L0.7,0 C0.3,0 0,0.3 0,0.7 L0,15.4 C0,15.7 0.3,16 0.7,16 L15.4,16 C15.8,16 16.1,15.7 16.1,15.3 L16.1,0.7 C16,0.3 15.7,0 15.3,0 Z M4.7,13.6 L2.4,13.6 L2.4,6 L4.8,6 L4.8,13.6 L4.7,13.6 Z M3.6,5 C2.8,5 2.2,4.3 2.2,3.6 C2.2,2.8 2.8,2.2 3.6,2.2 C4.4,2.2 5,2.8 5,3.6 C4.9,4.3 4.3,5 3.6,5 Z M13.6,13.6 L11.2,13.6 L11.2,9.9 C11.2,9 11.2,7.9 10,7.9 C8.8,7.9 8.6,8.9 8.6,9.9 L8.6,13.7 L6.2,13.7 L6.2,6 L8.5,6 L8.5,7 L8.5,7 C8.8,6.4 9.6,5.8 10.7,5.8 C13.1,5.8 13.5,7.4 13.5,9.4 L13.5,13.6 L13.6,13.6 Z" id="Shape"></path>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </svg>
+        </a>
+        
+        
+        
+        <a href="https://github.com/YujieLu10" target="blank">
+          <svg width="17px" height="17px" viewBox="0 0 17 17" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <title>social-16px_logo-github</title>
+              <g id="Portfolio" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                  <g id="GitHub-Mark" transform="translate(-136.000000, -55.000000)" fill="#505050">
+                      <path d="M144.319263,55.455 C139.902185,55.455 136.32,59.0366937 136.32,63.4552456 C136.32,66.9897924 138.612029,69.9880428 141.791009,71.0459021 C142.191267,71.1195692 142.337128,70.8725389 142.337128,70.6603777 C142.337128,70.4708077 142.330252,69.967416 142.326323,69.2999922 C140.101086,69.7832483 139.631581,68.2273994 139.631581,68.2273994 C139.267666,67.303123 138.743156,67.057075 138.743156,67.057075 C138.016799,66.5610499 138.798161,66.5708722 138.798161,66.5708722 C139.601132,66.6273503 140.02349,67.3954524 140.02349,67.3954524 C140.737078,68.617835 141.896107,68.2647241 142.351861,68.0599296 C142.424546,67.5432777 142.631305,67.1906579 142.859673,66.9907746 C141.083314,66.7889268 139.215608,66.1023495 139.215608,63.0368165 C139.215608,62.163616 139.527465,61.4490452 140.039206,60.8901576 C139.956698,60.6878187 139.682166,59.8740429 140.117784,58.7729656 C140.117784,58.7729656 140.789137,58.5578577 142.317483,59.5931258 C142.95544,59.4153426 143.640053,59.326942 144.320246,59.3235043 C144.999947,59.326942 145.684069,59.4153426 146.323008,59.5931258 C147.850372,58.5578577 148.520743,58.7729656 148.520743,58.7729656 C148.957343,59.8740429 148.68281,60.6878187 148.600794,60.8901576 C149.113517,61.4490452 149.422919,62.163616 149.422919,63.0368165 C149.422919,66.1102073 147.552266,66.7864712 145.770505,66.9843901 C146.057315,67.2314204 146.313186,67.7195876 146.313186,68.4660808 C146.313186,69.5352357 146.303364,70.3981229 146.303364,70.6603777 C146.303364,70.8745034 146.447751,71.1234981 146.853411,71.045411 C150.029936,69.9850961 152.32,66.9888101 152.32,63.4552456 C152.32,59.0366937 148.737815,55.455 144.319263,55.455" id="Fill-4"></path>
+                  </g>
+              </g>
+          </svg>
+        </a>
+        
+                        
+    </div>
+    <a style="opacity: 0; z-index: -1;" title="World Map"><img src="//www.clustrmaps.com/map_v2.png?d=bISP4BROEJVmmH9RwalCrQGgodxNO4l-wHr6GAlTdpU&cl=ffffff"></a>
+
+    <a href="#" style="color: #574cdd; text-decoration: underline;" data-scroll-goto="0">Back to top</a>
+</footer>
+        
+
+        
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-XXXXXXXX-Y', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+<script src="https://yujielu10.github.io/js/jquery-1.js"></script>
+<script src="https://yujielu10.github.io/js/stickUp.js"></script>
+<script src="https://yujielu10.github.io/js/scrollIt.js" type="text/javascript"></script>
+<script type="text/javascript">
+    jQuery(function($) {
+        $(document).ready( function() {
+            $('.main-navigation').stickUp({
+
+            });
+        });
+    });
+    $(function(){
+        $.scrollIt({
+            topOffset: -70,         
+            easing: 'ease-in-out'
+        });
+    });
+</script>
+    </body>
+</html>

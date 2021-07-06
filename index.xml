@@ -1,83 +1,68 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>HOME on Edna West</title>
-    <link>https://YujieLu10.github.io/</link>
-    <description>Recent content in HOME on Edna West</description>
+    <title>Yujie Lu</title>
+    <link>https://yujielu10.github.io/</link>
+    <description>Recent content on Yujie Lu</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    <copyright>© Edna West</copyright>
-    <lastBuildDate>Fri, 03 May 2019 09:37:55 +0200</lastBuildDate><atom:link href="https://YujieLu10.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <language>en-us</language><atom:link href="https://yujielu10.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Getting started</title>
-      <link>https://YujieLu10.github.io/post/getting-started/</link>
-      <pubDate>Fri, 03 May 2019 09:37:55 +0200</pubDate>
+      <title></title>
+      <link>https://yujielu10.github.io/catrans/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://YujieLu10.github.io/post/getting-started/</guid>
-      <description>&lt;p&gt;Here are some details to help you getting started with this theme.&lt;/p&gt;</description>
+      <guid>https://yujielu10.github.io/catrans/</guid>
+      <description>Pipeline Strategy </description>
     </item>
     
     <item>
-      <title>Portfolio Definition</title>
-      <link>https://YujieLu10.github.io/post/portfolio-definition/</link>
-      <pubDate>Thu, 02 May 2019 19:49:05 +0200</pubDate>
+      <title></title>
+      <link>https://yujielu10.github.io/drawcall/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://YujieLu10.github.io/post/portfolio-definition/</guid>
-      <description>&lt;p&gt;Here are some details about the portfolio settings.&lt;/p&gt;
-&lt;figure&gt;
-    &lt;img src=&#34;https://YujieLu10.github.io/post/images/portfolio-example.png&#34;
-         alt=&#34;Example of Portfolio page&#34;/&gt; &lt;figcaption&gt;
-            &lt;p&gt;Example of Portfolio page&lt;/p&gt;
-        &lt;/figcaption&gt;
-&lt;/figure&gt;</description>
+      <guid>https://yujielu10.github.io/drawcall/</guid>
+      <description>Background In the Browser mode of cocos creator, you can see the value of Drawcall. In our project, the number of drawcalls has exceeded the ideal value, and the demand for drawcall optimization is proposed.
+Firstly, by observing the change of the drawcall value through the deactive node method, you can locate the source of a large number of drawcalls (single node or multiple nodes) in the scene. Further analysis produces a large number of drawcall factors.</description>
     </item>
     
     <item>
-      <title>Sample project</title>
-      <link>https://YujieLu10.github.io/portfolio/sample-project/</link>
-      <pubDate>Thu, 02 May 2019 19:47:09 +0200</pubDate>
+      <title></title>
+      <link>https://yujielu10.github.io/tblackbox/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://YujieLu10.github.io/portfolio/sample-project/</guid>
-      <description>This would be a description of your sample project. You can add any content you&amp;rsquo;d like.
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</description>
+      <guid>https://yujielu10.github.io/tblackbox/</guid>
+      <description>BlackBox Framework  MapReduce Task: generate raw files and index files Log Puller(Index Unit): pull data from HDFS(route method: index % sharding no) and generate index files Index Puller(Search Unit): pull index files from &amp;ldquo;Index Unit&amp;rdquo; Search Proxy: handle search request  SearchUnit Module  Load files of last 7 days Search Request Update Invert Lib Info Load files within request duration (start_timestamp, end_timestamp) Search Finish Log Analyze by szl  Sawzall Framework Sample Code  collection sawzall will sort result automatically  proto &amp;#34;/data/szl/proto/log/protofilename.</description>
     </item>
     
     <item>
-      <title>Archetypes management</title>
-      <link>https://YujieLu10.github.io/post/archetypes/</link>
-      <pubDate>Thu, 02 May 2019 19:25:30 +0200</pubDate>
+      <title></title>
+      <link>https://yujielu10.github.io/tbotnaive/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://YujieLu10.github.io/post/archetypes/</guid>
-      <description>&lt;p&gt;The archetypes are defined in the &lt;code&gt;archetypes&lt;/code&gt; folder, for both post and portfolio.&lt;/p&gt;</description>
+      <guid>https://yujielu10.github.io/tbotnaive/</guid>
+      <description>Intelligent Dialogue System Demo Report Background Product Requirements Online education products face a large number of repetitive problems from students. In order to reduce the pressure of manual customer service, and to provide students with timely responses and solve student problems, it is necessary to introduce intelligent customer service.
+Dialogue Systems for Online Education  Question-Answering System It is basically an interactive mode of &amp;ldquo;one question and one answer&amp;rdquo;, so the construction of a question and answer system generally does not involve dialogue management related technologies.</description>
     </item>
     
     <item>
-      <title>Shortcodes</title>
-      <link>https://YujieLu10.github.io/post/shortcodes/</link>
-      <pubDate>Mon, 29 Apr 2019 16:18:12 +0100</pubDate>
+      <title></title>
+      <link>https://yujielu10.github.io/tlog/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://YujieLu10.github.io/post/shortcodes/</guid>
-      <description>&lt;p&gt;Introduction of the shortcodes defined in the personal-web theme.&lt;/p&gt;</description>
+      <guid>https://yujielu10.github.io/tlog/</guid>
+      <description>Framework Tinylog &amp;amp; Tlog Tinylog is mainly responsible for initialization and adding loggers,
+public static void init(String appid, Context context) { if(isInitialized){ return; } isInitialized = true; TinyLog.appid = appid; TinyLog.context = context.getApplicationContext(); packageName = Tools.getProcessName(context); ExceptionHandler.init(); } Tlog exposes the interface for printing logs, and sends log requests to different loggers.
+public static &amp;lt;T&amp;gt; void i(String tag, T obj) { instance.log(LogLevel.INFO, tag, obj); } public &amp;lt;T&amp;gt; void log(final int priority, final String tag, final T obj) { Iterator&amp;lt;Map.</description>
     </item>
     
     <item>
-      <title>Config File</title>
-      <link>https://YujieLu10.github.io/post/config-file/</link>
-      <pubDate>Sat, 20 Apr 2019 16:18:12 +0100</pubDate>
+      <title></title>
+      <link>https://yujielu10.github.io/tmonitor/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://YujieLu10.github.io/post/config-file/</guid>
-      <description>&lt;p&gt;Here is the basic config file used for personal-web.&lt;/p&gt;
-&lt;p&gt;You can use it as a base for your website.&lt;/p&gt;</description>
-    </item>
-    
-    <item>
-      <title>Open Graph image</title>
-      <link>https://YujieLu10.github.io/post/define-specific-og-image/</link>
-      <pubDate>Sat, 20 Apr 2019 11:14:59 +0200</pubDate>
-      
-      <guid>https://YujieLu10.github.io/post/define-specific-og-image/</guid>
-      <description>Within any page, you can add in the FrontMatter a images array that will be used to define a specific Open Graph image.
-For example, see content/_index.md page:</description>
+      <guid>https://yujielu10.github.io/tmonitor/</guid>
+      <description>Monitor Log Process Log Join  hbase: save log records, serve as tempory storage for log join process Join: high disk I/O of hbase brings intensive JAVA GC manipuations  Log Size Monitor the log size and clear useless fields that take up large memory usage.
+Query Size Monitor  request time and delay request number monitor  </description>
     </item>
     
   </channel>
